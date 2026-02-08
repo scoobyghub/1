@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.10
+// @name         TMN 2010 Automation Helper v12.11
 // @namespace    http://tampermonkey.net/
-// @version      12.10
-// @description  v12.10 + Single tab + Flicker fix + UI cleanup + Garage minutes
+// @version      12.11
+// @description  v12.11 + Logout alerts trigger on login page
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
@@ -63,6 +63,68 @@
   AUTO_SUBMIT_DELAY: 3000
 };
 
+  // ---------------------------
+  // Logout Alert Configuration (defined early so it's available on login page)
+  // ---------------------------
+  const logoutAlertConfig = {
+    tabFlash: GM_getValue('logoutTabFlash', true),
+    browserNotify: GM_getValue('logoutBrowserNotify', true)
+  };
+
+  function saveLogoutAlertConfig() {
+    GM_setValue('logoutTabFlash', logoutAlertConfig.tabFlash);
+    GM_setValue('logoutBrowserNotify', logoutAlertConfig.browserNotify);
+  }
+
+  // Tab title flash state
+  let titleFlashInterval = null;
+  const originalTitle = document.title;
+
+  function flashTabTitle() {
+    if (titleFlashInterval) return; // Already flashing
+    let toggle = false;
+    titleFlashInterval = setInterval(() => {
+      document.title = toggle ? '🔴 LOGIN NEEDED' : originalTitle;
+      toggle = !toggle;
+    }, 1000);
+  }
+
+  function stopFlashTabTitle() {
+    if (titleFlashInterval) {
+      clearInterval(titleFlashInterval);
+      titleFlashInterval = null;
+      document.title = originalTitle;
+    }
+  }
+
+  function showLogoutBrowserNotification() {
+    if (Notification.permission === 'granted') {
+      new Notification('TMN2010 Session Expired', {
+        body: 'Click to switch to tab and log back in',
+        requireInteraction: true,
+        icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=='
+      });
+    } else if (Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') {
+          new Notification('TMN2010 Session Expired', {
+            body: 'Click to switch to tab and log back in',
+            requireInteraction: true
+          });
+        }
+      });
+    }
+  }
+
+  function triggerLogoutAlerts() {
+    if (logoutAlertConfig.tabFlash) {
+      flashTabTitle();
+    }
+    if (logoutAlertConfig.browserNotify) {
+      showLogoutBrowserNotification();
+    }
+  }
+
   // ============================================================
   // CHECK IF WE'RE ON DEFAULT PAGE (SESSION REFRESH) - REDIRECT TO LOGIN
   // ============================================================
@@ -104,6 +166,9 @@
   const isLoginPage = currentPath.includes("/login.aspx");
 
   if (isLoginPage) {
+    // Trigger logout alerts (tab flash, browser notification) when redirected to login page
+    triggerLogoutAlerts();
+
     // AUTO-LOGIN CODE
     const USERNAME_ID = "ctl00_main_txtUsername";
     const PASSWORD_ID = "ctl00_main_txtPassword";
@@ -141,7 +206,7 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.10\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.11\n${message}`;
     }
 
     function clearTimers() {
@@ -397,68 +462,6 @@ if (currentPath.includes("/authenticated/")) {
     GM_setValue('messageCheckInterval', telegramConfig.messageCheckInterval);
     GM_setValue('notifySqlCheck', telegramConfig.notifySqlCheck);
     GM_setValue('notifyLogout', telegramConfig.notifyLogout);
-  }
-
-  // ---------------------------
-  // Logout Alert Configuration
-  // ---------------------------
-  const logoutAlertConfig = {
-    tabFlash: GM_getValue('logoutTabFlash', true),
-    browserNotify: GM_getValue('logoutBrowserNotify', true)
-  };
-
-  function saveLogoutAlertConfig() {
-    GM_setValue('logoutTabFlash', logoutAlertConfig.tabFlash);
-    GM_setValue('logoutBrowserNotify', logoutAlertConfig.browserNotify);
-  }
-
-  // Tab title flash state
-  let titleFlashInterval = null;
-  const originalTitle = document.title;
-
-  function flashTabTitle() {
-    if (titleFlashInterval) return; // Already flashing
-    let toggle = false;
-    titleFlashInterval = setInterval(() => {
-      document.title = toggle ? '🔴 LOGIN NEEDED' : originalTitle;
-      toggle = !toggle;
-    }, 1000);
-  }
-
-  function stopFlashTabTitle() {
-    if (titleFlashInterval) {
-      clearInterval(titleFlashInterval);
-      titleFlashInterval = null;
-      document.title = originalTitle;
-    }
-  }
-
-  function showLogoutBrowserNotification() {
-    if (Notification.permission === 'granted') {
-      new Notification('TMN2010 Session Expired', {
-        body: 'Click to switch to tab and log back in',
-        requireInteraction: true,
-        icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=='
-      });
-    } else if (Notification.permission === 'default') {
-      Notification.requestPermission().then(perm => {
-        if (perm === 'granted') {
-          new Notification('TMN2010 Session Expired', {
-            body: 'Click to switch to tab and log back in',
-            requireInteraction: true
-          });
-        }
-      });
-    }
-  }
-
-  function triggerLogoutAlerts() {
-    if (logoutAlertConfig.tabFlash) {
-      flashTabTitle();
-    }
-    if (logoutAlertConfig.browserNotify) {
-      showLogoutBrowserNotification();
-    }
   }
 
   let state = {
