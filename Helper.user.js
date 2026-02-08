@@ -206,7 +206,7 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.11\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.12\n${message}`;
     }
 
     function clearTimers() {
