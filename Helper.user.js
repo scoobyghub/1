@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.13
+// @name         TMN 2010 Automation Helper v12.14
 // @namespace    http://tampermonkey.net/
-// @version      12.13
-// @description  v12.13 + Logout alerts trigger on login page
+// @version      12.14
+// @description  v12.14 + Logout alerts trigger on login page
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
@@ -206,7 +206,7 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.13\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.14\n${message}`;
     }
 
     function clearTimers() {
@@ -2856,7 +2856,7 @@ let logoutNotificationSent = false;
     wrapper.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>TMN Auto V12.13</strong>
+          <strong>TMN Auto V12.14</strong>
           <div>
             <button id="tmn-settings-btn" class="btn btn-sm btn-outline-secondary me-1" title="Settings">
               <i class="bi bi-gear"></i>
