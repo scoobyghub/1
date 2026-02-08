@@ -13,6 +13,6 @@
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @connect      api.telegram.org
-// @updateURL    https://not.in.use.home.ballz.uk/tmn/autotmn.meta.js
-// @downloadURL  https://not.in.use.home.ballz.uk/tmn/autotmn.user.js
+// @updateURL    https://raw.githubusercontent.com/scoobyghub/1/refs/heads/main/Helper.meta.js
+// @downloadURL  https://raw.githubusercontent.com/scoobyghub/1/refs/heads/main/Helper.user.js
 // ==/UserScript==
