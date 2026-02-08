@@ -677,7 +677,7 @@ if (currentPath.includes("/authenticated/")) {
   // ---------------------------
   const statsCollectionConfig = {
     enabled: GM_getValue('statsCollectionEnabled', true),
-    interval: GM_getValue('statsCollectionInterval', 900), // 15 minutes default
+    interval: GM_getValue('statsCollectionInterval', 60), // 1 minutes default
     lastCollection: GM_getValue('lastStatsCollection', 0),
     cachedStats: GM_getValue('cachedGameStats', null)
   };
