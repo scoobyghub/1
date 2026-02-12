@@ -2878,7 +2878,7 @@ let logoutNotificationSent = false;
     wrapper.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>TMN Auto V12.15</strong>
+          <strong>TMN Auto V12.16</strong>
           <div>
             <button id="tmn-settings-btn" class="btn btn-sm btn-outline-secondary me-1" title="Settings">
               <i class="bi bi-gear"></i>
