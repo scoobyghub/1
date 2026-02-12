@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.16
+// @name         TMN 2010 Automation Helper v12.17
 // @namespace    http://tampermonkey.net/
-// @version      12.16
-// @description  v12.16 + Fix captcha countdown flicker/restart bug
+// @version      12.17
+// @description  v12.17 + Fix captcha countdown flicker/restart bug
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
@@ -186,9 +186,8 @@
     let submitTimer = null;
     let countdownTimer = null;
     let loginOverlay = null;
-    let submitCountdownActive = false;  // Lock flag to prevent token-flicker restarts
-    let tokenGoneSince = 0;             // Tracks when token first disappeared
-    const TOKEN_FLICKER_TOLERANCE = 2000; // Ignore token absence shorter than 2s
+    let submitLocked = false;  // Once countdown starts, block all re-scheduling
+    let submitEndTime = 0;     // Fixed timestamp when submit will fire
 
     function log(...args) {
       console.log("[TMN AutoLogin]", ...args);
@@ -209,14 +208,14 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.16\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.17\n${message}`;
     }
 
     function clearTimers() {
       if (submitTimer) { clearTimeout(submitTimer); submitTimer = null; }
       if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-      submitCountdownActive = false;
-      tokenGoneSince = 0;
+      submitLocked = false;
+      submitEndTime = 0;
     }
 
     function resetLoginState() {
@@ -308,20 +307,33 @@
     }
 
     function scheduleAutoSubmit(delay = LOGIN_CONFIG.AUTO_SUBMIT_DELAY) {
+      if (submitLocked) {
+        log("Submit already locked — ignoring duplicate schedule request");
+        return;
+      }
       clearTimers();
-      submitCountdownActive = true;
-      let secondsLeft = Math.ceil(delay / 1000);
-      updateLoginOverlay(`✅ Captcha completed – submitting in ${secondsLeft}s...`);
-      countdownTimer = setInterval(() => {
-        secondsLeft--;
-        if (secondsLeft > 0) {
-          updateLoginOverlay(`✅ Captcha completed – submitting in ${secondsLeft}s...`);
+      submitLocked = true;
+      submitEndTime = Date.now() + delay;
+      // Display uses the fixed end time — can never jump backwards
+      function updateCountdownDisplay() {
+        const remaining = Math.ceil((submitEndTime - Date.now()) / 1000);
+        if (remaining > 0) {
+          updateLoginOverlay(`✅ Captcha completed – submitting in ${remaining}s...`);
         }
-      }, 1000);
-      submitTimer = setTimeout(() => { attemptLogin(); }, delay);
+      }
+      updateCountdownDisplay();
+      countdownTimer = setInterval(updateCountdownDisplay, 500); // Update twice per second for smoother display
+      submitTimer = setTimeout(() => {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        attemptLogin();
+      }, delay);
     }
 
     function checkLoginPage() {
+      // If submit countdown is locked in, don't touch anything — just let it finish
+      if (submitLocked) { return; }
+
       const errorElement = document.querySelector(ERROR_SEL);
       if (errorElement) {
         const errorMsg = (errorElement.textContent || "").trim().toLowerCase();
@@ -339,28 +351,12 @@
       const captchaCompleted = isCaptchaCompleted();
       const currentToken = getCaptchaToken();
       if (loginBtn && !loginBtn.disabled && captchaCompleted && currentToken && currentToken !== lastTokenUsed) {
-        // Token is present — reset flicker tracker
-        tokenGoneSince = 0;
         if (!submitTimer) {
           updateLoginOverlay("✅ Captcha completed - auto-submitting...");
           scheduleAutoSubmit(LOGIN_CONFIG.AUTO_SUBMIT_DELAY + Math.floor(Math.random() * 2000));
         }
       } else {
-        // Only cancel a running countdown if the token has been gone for longer than the flicker tolerance
         if (submitTimer && (!captchaCompleted || !currentToken || (loginBtn && loginBtn.disabled))) {
-          if (submitCountdownActive) {
-            // Token flickered — start tracking how long it's been gone
-            if (!tokenGoneSince) {
-              tokenGoneSince = Date.now();
-              log("Token briefly absent — waiting to see if it returns...");
-              return; // Don't cancel yet, give it time
-            }
-            if (Date.now() - tokenGoneSince < TOKEN_FLICKER_TOLERANCE) {
-              return; // Still within tolerance, don't cancel
-            }
-            // Token has been gone too long — this is a real cancellation
-            log("Token absent for >" + TOKEN_FLICKER_TOLERANCE + "ms — cancelling countdown");
-          }
           clearTimers();
           if (!captchaCompleted) {
             updateLoginOverlay("⏳ Waiting for captcha completion...");
@@ -2878,7 +2874,7 @@ let logoutNotificationSent = false;
     wrapper.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>TMN Auto V12.16</strong>
+          <strong>TMN Auto V12.17</strong>
           <div>
             <button id="tmn-settings-btn" class="btn btn-sm btn-outline-secondary me-1" title="Settings">
               <i class="bi bi-gear"></i>
@@ -4039,7 +4035,7 @@ function mainLoop() {
 
     // Show appropriate status based on tab status
     if (tabManager.isMasterTab) {
-      updateStatus("TMN Auto v12.10 loaded - Master tab (single tab mode)");
+      updateStatus("TMN Auto v12.17 loaded - Master tab (single tab mode)");
     } else {
       updateStatus("⏸ Secondary tab - close this tab or it will remain inactive");
     }
