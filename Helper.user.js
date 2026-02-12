@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.15
+// @name         TMN 2010 Automation Helper v12.16
 // @namespace    http://tampermonkey.net/
-// @version      12.15
-// @description  v12.15 + Logout alerts trigger on login page
+// @version      12.16
+// @description  v12.16 + Fix captcha countdown flicker/restart bug
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
@@ -186,6 +186,9 @@
     let submitTimer = null;
     let countdownTimer = null;
     let loginOverlay = null;
+    let submitCountdownActive = false;  // Lock flag to prevent token-flicker restarts
+    let tokenGoneSince = 0;             // Tracks when token first disappeared
+    const TOKEN_FLICKER_TOLERANCE = 2000; // Ignore token absence shorter than 2s
 
     function log(...args) {
       console.log("[TMN AutoLogin]", ...args);
@@ -206,12 +209,14 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.15\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.16\n${message}`;
     }
 
     function clearTimers() {
       if (submitTimer) { clearTimeout(submitTimer); submitTimer = null; }
       if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+      submitCountdownActive = false;
+      tokenGoneSince = 0;
     }
 
     function resetLoginState() {
@@ -304,6 +309,7 @@
 
     function scheduleAutoSubmit(delay = LOGIN_CONFIG.AUTO_SUBMIT_DELAY) {
       clearTimers();
+      submitCountdownActive = true;
       let secondsLeft = Math.ceil(delay / 1000);
       updateLoginOverlay(`✅ Captcha completed – submitting in ${secondsLeft}s...`);
       countdownTimer = setInterval(() => {
@@ -333,12 +339,28 @@
       const captchaCompleted = isCaptchaCompleted();
       const currentToken = getCaptchaToken();
       if (loginBtn && !loginBtn.disabled && captchaCompleted && currentToken && currentToken !== lastTokenUsed) {
+        // Token is present — reset flicker tracker
+        tokenGoneSince = 0;
         if (!submitTimer) {
           updateLoginOverlay("✅ Captcha completed - auto-submitting...");
           scheduleAutoSubmit(LOGIN_CONFIG.AUTO_SUBMIT_DELAY + Math.floor(Math.random() * 2000));
         }
       } else {
+        // Only cancel a running countdown if the token has been gone for longer than the flicker tolerance
         if (submitTimer && (!captchaCompleted || !currentToken || (loginBtn && loginBtn.disabled))) {
+          if (submitCountdownActive) {
+            // Token flickered — start tracking how long it's been gone
+            if (!tokenGoneSince) {
+              tokenGoneSince = Date.now();
+              log("Token briefly absent — waiting to see if it returns...");
+              return; // Don't cancel yet, give it time
+            }
+            if (Date.now() - tokenGoneSince < TOKEN_FLICKER_TOLERANCE) {
+              return; // Still within tolerance, don't cancel
+            }
+            // Token has been gone too long — this is a real cancellation
+            log("Token absent for >" + TOKEN_FLICKER_TOLERANCE + "ms — cancelling countdown");
+          }
           clearTimers();
           if (!captchaCompleted) {
             updateLoginOverlay("⏳ Waiting for captcha completion...");
