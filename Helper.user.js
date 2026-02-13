@@ -291,13 +291,27 @@
     }
 
     function attemptLogin() {
-      clearTimers();
+      // Don't clear timers yet — check if we can actually submit first
       const loginBtn = document.getElementById(LOGIN_BTN_ID);
       const currentToken = getCaptchaToken();
       if (!loginBtn || loginBtn.disabled || !currentToken) {
-        updateLoginOverlay("⚠️ Login not ready - waiting...");
+        // Token may have flickered — retry up to 3 times over 1.5s before giving up
+        if (!attemptLogin._retries) attemptLogin._retries = 0;
+        attemptLogin._retries++;
+        if (attemptLogin._retries <= 3) {
+          log(`Login not ready on attempt ${attemptLogin._retries}/3 — retrying in 500ms...`);
+          updateLoginOverlay(`⚠️ Verifying captcha... retry ${attemptLogin._retries}/3`);
+          setTimeout(attemptLogin, 500);
+          return;
+        }
+        // Gave up — reset everything
+        attemptLogin._retries = 0;
+        clearTimers();
+        updateLoginOverlay("⚠️ Login not ready - waiting for new captcha...");
         return;
       }
+      attemptLogin._retries = 0;
+      clearTimers();
       loginAttempts++;
       localStorage.setItem(LS_LOGIN_ATTEMPTS, loginAttempts.toString());
       lastTokenUsed = currentToken;
@@ -2874,7 +2888,7 @@ let logoutNotificationSent = false;
     wrapper.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>TMN Auto V12.17</strong>
+          <strong>TMN Auto V12.15</strong>
           <div>
             <button id="tmn-settings-btn" class="btn btn-sm btn-outline-secondary me-1" title="Settings">
               <i class="bi bi-gear"></i>
@@ -4035,7 +4049,7 @@ function mainLoop() {
 
     // Show appropriate status based on tab status
     if (tabManager.isMasterTab) {
-      updateStatus("TMN Auto v12.17 loaded - Master tab (single tab mode)");
+      updateStatus("TMN Auto v12.10 loaded - Master tab (single tab mode)");
     } else {
       updateStatus("⏸ Secondary tab - close this tab or it will remain inactive");
     }
