@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.17
+// @name         TMN 2010 Automation Helper v12.18
 // @namespace    http://tampermonkey.net/
-// @version      12.17
-// @description  v12.17 + Logout alerts trigger on login page
+// @version      12.18
+// @description  v12.18 + Logout alerts trigger on login page
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
