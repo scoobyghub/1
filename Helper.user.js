@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.17
+// @name         TMN 2010 Automation Helper v12.18
 // @namespace    http://tampermonkey.net/
-// @version      12.17
-// @description  v12.17 + Fix captcha countdown flicker/restart bug
+// @version      12.18
+// @description  v12.18 + Fix captcha countdown flicker/restart bug
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
@@ -208,7 +208,7 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.17\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.18\n${message}`;
     }
 
     function clearTimers() {
