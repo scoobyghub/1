@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.20
+// @name         TMN 2010 Automation Helper v12.21
 // @namespace    http://tampermonkey.net/
-// @version      12.20
-// @description  v12.20 + Fix captcha countdown flicker/restart bug
+// @version      12.21
+// @description  v12.21 + Fix captcha countdown flicker/restart bug
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
@@ -44,7 +44,6 @@
   // ---------------------------
   const EXCLUDED_PAGES = [
     '/authenticated/forum.aspx',
-    '/authenticated/playerproperty.aspx',
     '/authenticated/personal.aspx'
   ];
   const currentPathLower = window.location.pathname.toLowerCase();
@@ -224,7 +223,7 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.20\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.21\n${message}`;
     }
 
     function clearTimers() {
@@ -2897,7 +2896,7 @@ let logoutNotificationSent = false;
     wrapper.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>TMN Auto V12.20</strong>
+          <strong>TMN Auto V12.21</strong>
           <div>
             <button id="tmn-settings-btn" class="btn btn-sm btn-outline-secondary me-1" title="Settings">
               <i class="bi bi-gear"></i>
@@ -4058,7 +4057,7 @@ function mainLoop() {
 
     // Show appropriate status based on tab status
     if (tabManager.isMasterTab) {
-      updateStatus("TMN Auto v12.20 loaded - Master tab (single tab mode)");
+      updateStatus("TMN Auto v12.21 loaded - Master tab (single tab mode)");
     } else {
       updateStatus("⏸ Secondary tab - close this tab or it will remain inactive");
     }
