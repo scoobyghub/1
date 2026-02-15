@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.18
+// @name         TMN 2010 Automation Helper v12.19
 // @namespace    http://tampermonkey.net/
-// @version      12.18
-// @description  v12.18 + Fix captcha countdown flicker/restart bug
+// @version      12.19
+// @description  v12.19 + Fix captcha countdown flicker/restart bug
 // @author       You
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
@@ -208,7 +208,7 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.18\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.19\n${message}`;
     }
 
     function clearTimers() {
@@ -271,20 +271,6 @@
       }
       if (!LOGIN_CONFIG.AUTO_SUBMIT_ENABLED) {
         updateLoginOverlay("🟢 Credentials filled.\nAuto-submit disabled.\nSolve captcha manually.");
-        return false;
-      }
-      if (loginAttempts >= LOGIN_CONFIG.MAX_LOGIN_ATTEMPTS) {
-        if (!loginPaused) {
-          loginPaused = true;
-          localStorage.setItem(LS_LOGIN_PAUSED, "true");
-          updateLoginOverlay("❌ Max attempts reached.\nRefreshing session...");
-          // Redirect to Default.aspx to refresh session, then back to login
-          setTimeout(() => {
-            localStorage.setItem(LS_LOGIN_ATTEMPTS, "0");
-            localStorage.setItem(LS_LOGIN_PAUSED, "false");
-            window.location.href = 'https://www.tmn2010.net/Default.aspx?show=1';
-          }, 2000);
-        }
         return false;
       }
       return true;
@@ -351,13 +337,20 @@
       const errorElement = document.querySelector(ERROR_SEL);
       if (errorElement) {
         const errorMsg = (errorElement.textContent || "").trim().toLowerCase();
-        if (errorMsg.includes("incorrect validation")) {
+        if (errorMsg.includes("incorrect validation") || errorMsg.includes("invalid")) {
+          // Login failed — clear everything and redirect Home → Login for a fresh session
           clearTimers();
-          updateLoginOverlay(`❌ Incorrect Validation (${loginAttempts}/${LOGIN_CONFIG.MAX_LOGIN_ATTEMPTS})\nPlease solve captcha again.`);
           lastTokenUsed = "";
           localStorage.removeItem(LS_LAST_TOKEN);
-        } else if (errorMsg.includes("invalid")) {
-          updateLoginOverlay(`⚠️ Invalid credentials (${loginAttempts}/${LOGIN_CONFIG.MAX_LOGIN_ATTEMPTS})`);
+          localStorage.setItem(LS_LOGIN_ATTEMPTS, "0");
+          localStorage.setItem(LS_LOGIN_PAUSED, "false");
+          const errorType = errorMsg.includes("incorrect validation") ? "Incorrect Validation" : "Invalid credentials";
+          updateLoginOverlay(`❌ ${errorType}\n🔄 Redirecting Home for fresh session...`);
+          log(`Login error: ${errorType} — redirecting to Default.aspx?show=1`);
+          setTimeout(() => {
+            window.location.href = 'https://www.tmn2010.net/Default.aspx?show=1';
+          }, 2000);
+          return;
         }
       }
       if (!canAutoLogin()) { return; }
@@ -2888,7 +2881,7 @@ let logoutNotificationSent = false;
     wrapper.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>TMN Auto V12.18</strong>
+          <strong>TMN Auto V12.15</strong>
           <div>
             <button id="tmn-settings-btn" class="btn btn-sm btn-outline-secondary me-1" title="Settings">
               <i class="bi bi-gear"></i>
@@ -4049,7 +4042,7 @@ function mainLoop() {
 
     // Show appropriate status based on tab status
     if (tabManager.isMasterTab) {
-      updateStatus("TMN Auto v12.10 loaded - Master tab (single tab mode)");
+      updateStatus("TMN Auto v12.19 loaded - Master tab (single tab mode)");
     } else {
       updateStatus("⏸ Secondary tab - close this tab or it will remain inactive");
     }
