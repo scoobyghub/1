@@ -1,14 +1,15 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.19
+// @name         TMN 2010 Automation Helper v12.20
 // @namespace    http://tampermonkey.net/
-// @version      12.19
-// @description  v12.19 + Fix captcha countdown flicker/restart bug
+// @version      12.20
+// @description  v12.20 + Fix captcha countdown flicker/restart bug
 // @author       You
-// @match        *://www.tmn2010.net/Default.aspx*
 // @match        *://www.tmn2010.net/login.aspx*
 // @match        *://www.tmn2010.net/authenticated/*
 // @match        *://www.tmn2010.net/Login.aspx*
 // @match        *://www.tmn2010.net/Authenticated/*
+// @match        *://www.tmn2010.net/Default.aspx*
+// @match        *://www.tmn2010.net/default.aspx*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
@@ -37,6 +38,20 @@
 
 (function () {
   'use strict';
+
+  // ---------------------------
+  // PAGE EXCLUSIONS — don't run automation UI on these pages
+  // ---------------------------
+  const EXCLUDED_PAGES = [
+    '/authenticated/forum.aspx',
+    '/authenticated/playerproperty.aspx',
+    '/authenticated/personal.aspx'
+  ];
+  const currentPathLower = window.location.pathname.toLowerCase();
+  if (EXCLUDED_PAGES.some(page => currentPathLower.includes(page.toLowerCase()))) {
+    console.log('[TMN] Excluded page — automation disabled on', currentPathLower);
+    return; // Exit entire script
+  }
 
   // ---------------------------
   // Minimal global CSS so host container sits above the page (always on top)
@@ -187,8 +202,8 @@
     let submitTimer = null;
     let countdownTimer = null;
     let loginOverlay = null;
-    let submitLocked = false;  // Once countdown starts, block all re-scheduling
-    let submitEndTime = 0;     // Fixed timestamp when submit will fire
+    let submitLocked = false; // Once countdown starts, block all re-scheduling
+    let submitEndTime = 0; // Fixed timestamp when submit will fire
 
     function log(...args) {
       console.log("[TMN AutoLogin]", ...args);
@@ -209,7 +224,7 @@
         document.body.appendChild(loginOverlay);
       }
       console.log("[TMN AutoLogin]", message);
-      loginOverlay.textContent = `TMN AutoLogin v12.19\n${message}`;
+      loginOverlay.textContent = `TMN AutoLogin v12.20\n${message}`;
     }
 
     function clearTimers() {
@@ -2882,7 +2897,7 @@ let logoutNotificationSent = false;
     wrapper.innerHTML = `
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>TMN Auto V12.15</strong>
+          <strong>TMN Auto V12.20</strong>
           <div>
             <button id="tmn-settings-btn" class="btn btn-sm btn-outline-secondary me-1" title="Settings">
               <i class="bi bi-gear"></i>
@@ -4043,7 +4058,7 @@ function mainLoop() {
 
     // Show appropriate status based on tab status
     if (tabManager.isMasterTab) {
-      updateStatus("TMN Auto v12.19 loaded - Master tab (single tab mode)");
+      updateStatus("TMN Auto v12.20 loaded - Master tab (single tab mode)");
     } else {
       updateStatus("⏸ Secondary tab - close this tab or it will remain inactive");
     }
