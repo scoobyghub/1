@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TMN 2010 Automation Helper v12.19
+// @name         TMN 2010 Automation Helper v12.20
 // @namespace    http://tampermonkey.net/
-// @version      12.19
-// @description  v12.19 + Fix captcha countdown flicker/restart bug
+// @version      12.20
+// @description  v12.20 + Fix captcha countdown flicker/restart bug
 // @author       You
 // @match        *://www.tmn2010.net/Default.aspx*
 // @match        *://www.tmn2010.net/login.aspx*
