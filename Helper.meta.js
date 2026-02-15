@@ -2,7 +2,7 @@
 // @name         TMN 2010 Automation Helper v12.19
 // @namespace    http://tampermonkey.net/
 // @version      12.19
-// @description  v12.19 + Logout alerts trigger on login page
+// @description  v12.19 + Fix captcha countdown flicker/restart bug
 // @author       You
 // @match        *://www.tmn2010.net/Default.aspx*
 // @match        *://www.tmn2010.net/login.aspx*
